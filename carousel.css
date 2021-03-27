@@ -1,0 +1,219 @@
+/* 
+ Notes on the classes:
+
+ 1. The .carousel-left and .carousel-right is used to indicate where
+    the active slide is heading.
+ 2. .active is the current slide.
+ 3. .active.carousel-left and .active.carousel-right is the current
+    slide in its in-transition state. Only one of these occurs at a time.
+ 4. .carousel-next.carousel-left and .carousel-prev.carousel-right
+    is the upcoming slide in transition.
+*/
+
+.carousel { 
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 80vh;
+}
+
+/* Carousel Controls */
+
+.carousel-indicators {
+  position: absolute;
+  right: 0;
+  bottom: 10%;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  padding-left: 0;
+  margin-right: 15%;
+  margin-left: 15%;
+  list-style: none;
+}
+
+.carousel-indicators > .active { background-color: white; }
+
+.carousel-indicators > li {
+  position: relative;
+  flex: 0 1 auto;
+  width: 30px;
+  height: 3px;
+  margin-right: 3px;
+  margin-left: 3px;
+  cursor: pointer;
+  background-color: rgba(255,255,255,.5);
+}
+
+.carousel-indicators > li::before,
+.carousel-indicators > li::after {
+  position: absolute;
+  left: 0;
+  display: inline-block;
+  width: 100%;
+  height: 10px;
+  content: "";
+}
+
+.carousel-indicators > li::before { top: -10px; }
+.carousel-indicators > li::after { bottom: -10px; }
+
+.carousel-indicators > li:hover { cursor: pointer; }
+
+.carousel-arrow {
+  border: solid white;
+  border-width: 0 5px 5px 0;
+  display: inline-block;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  cursor: pointer;
+}
+
+.carousel-arrow.left {
+  left: 2.5%;
+  transform: rotateZ(135deg);
+}
+.carousel-arrow.right {
+  right: 2.5%;
+  transform: rotateZ(315deg);
+}
+
+.carousel-item-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: inherit;
+}
+
+.carousel-heading {
+  position: relative;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: inherit;
+  z-index: 3;
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.carousel-heading  h1 {
+  font-size: 6rem;
+  user-select: none;
+  text-shadow: 1px 1px 8px #000;
+  font-family: 'Permanent Marker';
+  position: absolute;
+  top: 20%;
+  left: 10%;
+}
+
+.carousel-heading .typeWriter {
+  border-right: 1px solid white;
+  padding-right: .5rem;
+}
+
+.carousel-caption {
+  display: flex;
+  position: relative;
+  z-index: 4;
+  align-items: center;
+  justify-content: center;
+  height: inherit;
+}
+
+.carousel-caption h2 {
+  color: white;
+  z-index: 4;
+  font-size: 3rem;
+  font-family: 'Permanent Marker';
+  text-transform: capitalize;
+  margin: 5% auto 0;
+  text-align: center;
+  text-shadow: 1px 1px 8px #000;
+  width: 75%;
+  transition: all .4s ease;
+}
+
+/* Carousel Items*/
+.carousel-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 0;
+  height: 100%;
+  perspective: 1000px;
+  display: flex;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.carousel-cover {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,.49);
+}
+
+.active {
+  display: block;
+  transition: all 1s ease-in-out;
+}
+
+.disabled { display: none; }
+
+/* From right to left */
+.carousel-right { transform: translateX(100%); }
+.carousel-prev.right { animation: prevRight .7s cubic-bezier(0.47, 0, 0.75, 0.72) forwards; }
+.carousel-next.right { animation: nextRight .7s cubic-bezier(0.46, 0.03, 0.52, 0.96) forwards; }
+
+/* From left to right */
+.carousel-left { transform: translateX(-100%); }
+.carousel-prev.left { animation: prevLeft .7s cubic-bezier(0.47, 0, 0.75, 0.72) forwards; }
+.carousel-next.left { animation: nextLeft .7s cubic-bezier(0.46, 0.03, 0.52, 0.96)  forwards; }
+
+@keyframes nextRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes prevRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes nextLeft { 
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes prevLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@media only screen and (max-width:1366px) {
+  .carousel-heading h1 { font-size: 4rem; }
+  .carousel-caption h2 { font-size: 2rem; }
+}
+
+@media (max-width: 800px) {
+  .carousel-heading h1 {
+    font-size: 3.5rem;
+    top: 10%;
+    width: 100%;
+    text-align: center;
+    left: 0;
+  }
+  .carousel-caption h2 { font-size: 1.5rem; }
+}

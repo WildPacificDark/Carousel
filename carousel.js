@@ -1,128 +1,127 @@
-/**
- * Author: Elia Vettoretto
- * Original Date:   23/04/2020
- * Title:  Animated Carousel
- * Last Version: 1.1
-*/
 class Carousel {
   constructor(
     {
-      animationDuration = 700, 
-      timeBeforeChange = 7000,
-      autoStart = true,
-      autoRestart = false,
-      numberOfElems = 1,
+	    anim = {
+		    duration: 1000, // Animation length (in milliseconds)
+		    change: 7000, // How much time needs to pass before we change the slide
+		    timing: 'ease', // Animation Timing Function
+		    availSlides: 3, // Number of slide
+		    autoStart: true, // The carousel will automatically start?
+		    restart: false, // The carousel will restart automatically after the user has manually changed the slide?
+        transition: [
+          { prev: 'left', next: 'right' },
+          { prev: 'down', next: 'up' },
+          { prev: 'fadeout', next: 'fadein'}
+        ]
+	    },
       image = [],
-      heading = {},
-    } = {}) {
+      heading = { 
+        h1: { text: 'Carousel!', anim: typewriter },
+		    h2: { text: ["Some Text!", "Some Text!", "Some Text!"], anim: [slideRight, slideLeft, rotate] },
+		    h3: { text: ["Some Button!", "Some Button", "Some Button!"], anim: [] }
+	    },
+    } = {}
+  ) {
     
-    // The carousel will automatically start?
-    this.autoStart = autoStart;
+	  this.anim = anim;
+	  this.image;
+	  this.heading = heading;
+    this.heading.h1.elem = null;
+    this.heading.h2.elem = [];
+    this.heading.h1.elem = [];
     
-    // The carousel will restart automatically after the user has manually changed the slide?
-    this.autoRestart = autoRestart;
-    
-    // Animation length
-    this.animationDuration = animationDuration;
-    
-    // How much time needs to pass before we change the slide
-    this.timeBeforeChange = timeBeforeChange;
-    
-    // Next and previus index
     this.prevSlide = 0;
+	  this.curSlide = 0;
     this.nextSlide = 0;
-    
-    // Number of slides 
-    this.slidesNumber = numberOfElems;
-    
-    // Carousel Container
-    this.carouselDiv = document.querySelector('.carousel');
-    
-    // Start creating the HTML tags
-    
-    // Carousel Indicators
-    let indicators = this.create('ol');
-    indicators.setAttribute('class', 'carousel-indicators');
-    for(let i = 0; i < numberOfElems; ++i) {
-      let li = this.create('li');
-      if(!i) li.setAttribute('class', 'active');
-      li.setAttribute('data-index', i);
-      indicators.appendChild(li);
-    }
-    this.carouselDiv.appendChild(indicators);
-    this.carouselIndicators = document.querySelectorAll('.carousel-indicators li');
-    
-    // Carousel Arrows
-    let arrows = [this.create('div'), this.create('div')];
-    arrows[0].setAttribute('class', 'carousel-arrow left');
-    arrows[1].setAttribute('class', 'carousel-arrow right');
-    this.carouselDiv.appendChild(arrows[0]);
-    this.carouselDiv.appendChild(arrows[1]);
-    this.carouselArrows = document.querySelectorAll('.carousel-arrow');
-    
-    // Carousel Item Container
-    let carouselItemContainer = this.create('div');
-    carouselItemContainer.setAttribute('class', 'carousel-item-container');
-    
-    // Carousel Heading
-    this.heading = heading;
-    let carouselHeading = this.create('div');
-    carouselHeading.setAttribute('class', 'carousel-heading');
-    this.carouselHeadingText = this.create('h1');
-    this.carouselHeadingText.innerHTML = heading.h1.text[0];
-    carouselHeading.appendChild(this.carouselHeadingText);
-    carouselItemContainer.appendChild(carouselHeading);
-    
-    // Carousel Item
-    for(let i = 0; i < numberOfElems; ++i) {
-      let carouselItem = this.create('div');
-      carouselItem.setAttribute('class', i === 0 ? 'carousel-item' : 'carousel-item disabled');
-      carouselItem.setAttribute('style', `background-image:url('${image[i]}')`);
-      // Carousel Caption
-      let carouselCaption = this.create('div');
-      carouselCaption.setAttribute('class', 'carousel-caption');
-      // Carousel Caption Heading 2
-      let carouselCaptionText = this.create('h2');
-      carouselCaptionText.innerHTML = heading.h2.text[i];
-      // Carousel Cover
-      let carouselCover = this.create('div');
-      carouselCover.setAttribute('class', 'carousel-cover');
-      // Append Child
-      carouselCaption.appendChild(carouselCaptionText);
-      carouselCaption.appendChild(carouselCover);
-      carouselItem.appendChild(carouselCaption);
-      carouselItemContainer.appendChild(carouselItem);
-    }
-    this.carouselDiv.appendChild(carouselItemContainer);
-    this.carouselItems = document.querySelectorAll('.carousel-item');
-    
+      
     // Check if the animation is running
     this.isRunning = false;
     
     // Autoslide interval
     this.interval;
     
-    // Adding event listeners to dots
-    for(let i = 0; i <= this.numberOfSlides; ++i) {
-      this.carouselIndicators[i].addEventListener('click', (e) => {
-        if(!this.isRunning) { this.changeSlideFromDot(e.target); }
+    // Container
+    this.container = document.querySelector('.carousel');
+    this.slides = null;
+    
+    // Indicators
+    let indicators = this.#create('ol');
+    indicators.setAttribute('class', 'carousel-indicators');
+    for(let i = 0; i < this.availSlides; ++i) {
+      let li = this.#create('li');
+      if(!i) li.setAttribute('class', 'active');
+      li.setAttribute('data-index', i);
+      indicators.appendChild(li);
+    }
+    this.container.appendChild(indicators);
+    this.#indicators = document.querySelectorAll('.carousel-indicators li');
+    
+    // Arrows
+	  this.#arrows = [];
+	  for(let i = 0; i < 2; ++i) {
+	    this.#arrows[i] = this.#create('div')
+	    this.#arrows[i].setAttribute('class', `carousel-arrow ${!i ? 'left' : 'right'}`);
+	    this.#arrows[i].appendChild(this.#create('span'));
+	    this.container.appendChild(this.#arrows[i]);
+	  }
+    
+    // Slide Container
+    let slideContainer = this.#create('div');
+    slideContainer.setAttribute('class', 'carousel-item-container');
+	
+    // Heading 1
+    let carouselHeading = this.#create('div');
+    carouselHeading.setAttribute('class', 'carousel-heading');
+    this.heading.h1.elem = this.#create('h1');
+    this.heading.h1.elem.innerHTML = this.heading.h1.text;
+    carouselHeading.appendChild(this.heading.h1.elem);
+    slideContainer.appendChild(carouselHeading);
+    
+    // Slides
+    for(let i = 0; i < this.availSlides; ++i) {
+      this.slides = this.#create('div');
+      this.slides.setAttribute('class', !i ? 'carousel-item' : 'carousel-item disabled');
+      this.slides.setAttribute('style', `background-image:url('${image[i]}')`);
+      // Heading 2
+      let caption = this.#create('div');
+      caption.setAttribute('class', 'carousel-caption');
+      this.heading.h2.elem[i] = this.#create('h2');
+      this.heading.h2.elem[i].innerHTML = this.heading.h2.text[i];
+      // Cover
+      let carouselCover = this.#create('div');
+      carouselCover.setAttribute('class', 'carousel-cover');
+      caption.appendChild(this.heading.h2.elem[i]);
+      caption.appendChild(carouselCover);
+      this.slides.appendChild(caption);
+      slideContainer.appendChild(this.slides);
+    }
+    this.container.appendChild(slideContainer);
+    
+    // Add event listeners to dots
+    for(let i = 0; i <= this.availSlides; ++i) {
+      this.#indicators[i].addEventListener('click', (e) => {
+        if(!this.isRunning) { this.#changeSlideFromDot(e.target); }
       }, false);
     }
     
-    // Adding event listeners to arrows
+    // Add event listeners to arrows
     for(let i = 0; i < 2; ++i) {
-      // Change slide
-      this.carouselArrows[i].addEventListener('click', (e) => {
-        if(!this.isRunning) { this.changeSlideFromArrow(e.target); }
+      this.#arrows[i].addEventListener('click', (e) => {
+        if(!this.isRunning) { this.#changeSlideFromArrow(e.target); }
       }, false);
     }
+    
+    //Set Animation Duration and Timing Function
+    this.#root = document.querySelector(':root');
+    this.#root.style.setProperty('--animationDuration', `${(this.anim.duration / 1000).toString()}s`);
+    this.#root.style.setProperty('--animationTiming', `${this.anim.timing}`);
     
     // Start the slideShow
     this.start = () => {
       this.interval = setInterval(
         () => { 
-          this.autoShow(); 
-        }, this.timeBeforeChange
+          this.#autoShow();
+        }, this.anim.change
       );
     };
     
@@ -138,21 +137,20 @@ class Carousel {
     this.typewriterAnimation = null;
   }
   
-  get numberOfSlides() { return this.slidesNumber - 1; }
+  get availSlides() { return this.anim.availSlides - 1; }
+  get activeDot() { return this.container.querySelector('.carousel-indicators .active'); }
   
-  get activeDot() { return this.carouselDiv.querySelector('.carousel-indicators .active'); }
-  
-  create(tag) { return document.createElement(tag); }
+  #create(tag) { return document.createElement(tag); }
   
   // Automatic slideShow
-  autoShow() {
+  #autoShow() {
     this.prevSlide = this.nextSlide;
-    if(this.nextSlide >= this.numberOfSlides) { this.nextSlide = 0; }
+    if(this.nextSlide >= this.availSlides) { this.nextSlide = 0; }
     else { ++this.nextSlide; }
-    this.changeSlide('right');
+    this.changeSlide(this.anim.transition[this.prevSlide].next);
   }
   
-  changeSlideFromDot(elem) {
+  #changeSlideFromDot(elem) {
     // Check if user clicked the same dot
     if(elem.dataset.index != this.nextSlide) {
       // Prevent other clicks before animation is complete
@@ -164,73 +162,58 @@ class Carousel {
       // nextSlide is the slide to show
       this.nextSlide = elem.dataset.index;
       // Right to left
-      if(elem.dataset.index > this.prevSlide) { this.changeSlide('right'); }
+      if(elem.dataset.index > this.prevSlide) { this.changeSlide(this.anim.transition[this.prevSlide].next); }
       // Left to right
-      else { this.changeSlide('left'); }
+      else { this.changeSlide(this.anim.transition[this.prevSlide].prev); }
       // If restart is true, then restart the slideShow
       if(this.autoRestart) this.start();
     }
   }
   
-  changeSlideFromArrow(elem) {
+  #changeSlideFromArrow(elem) {
     this.isRunning = true;
     this.end();
     const index = Number((this.activeDot).dataset.index);
-    if(elem.classList.contains('left')) {
+    if(elem.classList.contains(this.anim.transition[this.prevSlide].prev)) {
       if(index === 0) {
         this.prevSlide = 0;
-        this.nextSlide = this.numberOfSlides;
+        this.nextSlide = this.availSlides;
       } else {
         this.prevSlide = this.nextSlide;
         this.nextSlide = index - 1;
       }
-      this.changeSlide('left');
+      this.changeSlide(this.anim.transition[this.prevSlide].prev);
     } else {
-      if(index === this.numberOfSlides) {
-        this.prevSlide = this.numberOfSlides;
+      if(index === this.availSlides) {
+        this.prevSlide = this.availSlides;
         this.nextSlide = 0;
       } else {
         this.prevSlide = this.nextSlide;
         this.nextSlide = index + 1;
       }
-      this.changeSlide('right');
+      this.changeSlide(this.anim.transition[this.prevSlide].next);
     }
     if(this.autoRestart) this.start();
   }
   
   // Change slide
   changeSlide(_class) {
-    
-    // If the animation is still performing, stop it
-    if(this.typewriterAnimation) clearInterval(this.typewriterAnimation);
-    this.carouselHeadingText.innerText = '';
-    
-    // First, we'll put the slide to show to the (right\left)
-    this.carouselItems[this.nextSlide].className = `carousel-item carousel-${_class}`;
+    // First, we'll put the slide to show to the (right\left | up\down)
+    this.slides[this.nextSlide].className = `carousel-item ${_class}`;
     
     // Then we'll perform the animation
-    this.carouselItems[this.prevSlide].className = `carousel-item carousel-prev ${_class}`;
-    this.carouselItems[this.nextSlide].className = `carousel-item carousel-next ${_class}`;
+    this.slides[this.prevSlide].className = `carousel-item carousel-prev ${_class}`;
+    this.slides[this.nextSlide].className = `carousel-item carousel-next ${_class}`;
     
     // Change active dots
-    this.carouselIndicators[this.prevSlide].classList.toggle("active");
-    this.carouselIndicators[this.nextSlide].classList.toggle("active");
-    
-    // Change heading text with typewriter effect
-    if(this.typewriterEffectH1) {
-      let i = 0;
-      this.typewriterAnimation = setInterval(() => {
-        if(i < this.heading.h1.text[this.nextSlide].length)
-          this.carouselHeadingText.innerHTML += this.heading.h1.text[this.nextSlide].charAt(i++);
-        else clearInterval(this.typewriter);
-      }, 60);
-    }
-    
+    this.#indicators[this.prevSlide].classList.toggle("active");
+    this.#indicators[this.nextSlide].classList.toggle("active");
+	
     // Wait animationDuration seconds before disabling the former active slide
     setTimeout(() => {
-      this.carouselItems[this.prevSlide].className = "carousel-item disabled";
-      this.carouselItems[this.nextSlide].className = "carousel-item";
+      this.slides[this.prevSlide].className = "carousel-item disabled";
+      this.slides[this.nextSlide].className = "carousel-item";
       this.isRunning = false;
-    }, this.animationDuration);
+    }, this.anim.duration);
   }
 }

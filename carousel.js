@@ -1,37 +1,36 @@
 class Carousel {
   constructor(
     {
-	    anim = {
-		    duration: 1000, // Animation length (in milliseconds)
-		    change: 7000, // How much time needs to pass before we change the slide
-		    timing: 'ease', // Animation Timing Function
-		    availSlides: 3, // Number of slide
-		    autoStart: true, // The carousel will automatically start?
-		    restart: false, // The carousel will restart automatically after the user has manually changed the slide?
+	  anim = {
+		duration: 1000, // Animation length (in milliseconds)
+		change: 7000, // How much time needs to pass before we change the slide
+		timing: 'ease', // Animation Timing Function
+		availSlides: 3, // Number of slide
+		autoStart: true, // The carousel will automatically start?
+		restart: false, // The carousel will restart automatically after the user has manually changed the slide?
         transition: [
           { prev: 'left', next: 'right' },
           { prev: 'down', next: 'up' },
           { prev: 'fadeout', next: 'fadein'}
         ]
-	    },
+	  },
       image = [],
       heading = { 
         h1: { text: 'Carousel!', anim: typewriter },
-		    h2: { text: ["Some Text!", "Some Text!", "Some Text!"], anim: [slideRight, slideLeft, rotate] },
-		    h3: { text: ["Some Button!", "Some Button", "Some Button!"], anim: [] }
-	    },
+		h2: { text: ["Some Text!", "Some Text!", "Some Text!"], anim: [slideRight, slideLeft, rotate] },
+		h3: { text: ["Some Button!", "Some Button", "Some Button!"], anim: [] }
+	  },
     } = {}
   ) {
     
-	  this.anim = anim;
-	  this.image;
-	  this.heading = heading;
+	this.anim = anim;
+	this.image;
+	this.heading = heading;
     this.heading.h1.elem = null;
     this.heading.h2.elem = [];
     this.heading.h1.elem = [];
     
     this.prevSlide = 0;
-	  this.curSlide = 0;
     this.nextSlide = 0;
       
     // Check if the animation is running
@@ -47,27 +46,27 @@ class Carousel {
     // Indicators
     let indicators = this.#create('ol');
     indicators.setAttribute('class', 'carousel-indicators');
-    for(let i = 0; i < this.availSlides; ++i) {
+    for(let i = 0; i <= this.availSlides; ++i) {
       let li = this.#create('li');
       if(!i) li.setAttribute('class', 'active');
       li.setAttribute('data-index', i);
       indicators.appendChild(li);
     }
     this.container.appendChild(indicators);
-    this.#indicators = document.querySelectorAll('.carousel-indicators li');
+    this.indicators = document.querySelectorAll('.carousel-indicators li');
     
     // Arrows
-	  this.#arrows = [];
-	  for(let i = 0; i < 2; ++i) {
-	    this.#arrows[i] = this.#create('div')
-	    this.#arrows[i].setAttribute('class', `carousel-arrow ${!i ? 'left' : 'right'}`);
-	    this.#arrows[i].appendChild(this.#create('span'));
-	    this.container.appendChild(this.#arrows[i]);
-	  }
+	this.arrows = [];
+	for(let i = 0; i < 2; ++i) {
+	  this.arrows[i] = this.#create('div')
+	  this.arrows[i].setAttribute('class', `carousel-arrow ${!i ? 'left' : 'right'}`);
+	  this.arrows[i].appendChild(this.#create('span'));
+	  this.container.appendChild(this.arrows[i]);
+	}
     
     // Slide Container
-    let slideContainer = this.#create('div');
-    slideContainer.setAttribute('class', 'carousel-item-container');
+    this.slideContainer = this.#create('div');
+    this.slideContainer.setAttribute('class', 'carousel-item-container');
 	
     // Heading 1
     let carouselHeading = this.#create('div');
@@ -75,10 +74,10 @@ class Carousel {
     this.heading.h1.elem = this.#create('h1');
     this.heading.h1.elem.innerHTML = this.heading.h1.text;
     carouselHeading.appendChild(this.heading.h1.elem);
-    slideContainer.appendChild(carouselHeading);
+    this.slideContainer.appendChild(carouselHeading);
     
     // Slides
-    for(let i = 0; i < this.availSlides; ++i) {
+    for(let i = 0; i <= this.availSlides; ++i) {
       this.slides = this.#create('div');
       this.slides.setAttribute('class', !i ? 'carousel-item' : 'carousel-item disabled');
       this.slides.setAttribute('style', `background-image:url('${image[i]}')`);
@@ -93,28 +92,29 @@ class Carousel {
       caption.appendChild(this.heading.h2.elem[i]);
       caption.appendChild(carouselCover);
       this.slides.appendChild(caption);
-      slideContainer.appendChild(this.slides);
+      this.slideContainer.appendChild(this.slides);
     }
-    this.container.appendChild(slideContainer);
+	this.slides = this.slideContainer.querySelectorAll('.carousel-item');
+    this.container.appendChild(this.slideContainer);
     
     // Add event listeners to dots
     for(let i = 0; i <= this.availSlides; ++i) {
-      this.#indicators[i].addEventListener('click', (e) => {
+      this.indicators[i].addEventListener('click', (e) => {
         if(!this.isRunning) { this.#changeSlideFromDot(e.target); }
       }, false);
     }
     
     // Add event listeners to arrows
     for(let i = 0; i < 2; ++i) {
-      this.#arrows[i].addEventListener('click', (e) => {
+      this.arrows[i].addEventListener('click', (e) => {
         if(!this.isRunning) { this.#changeSlideFromArrow(e.target); }
       }, false);
     }
     
     //Set Animation Duration and Timing Function
-    this.#root = document.querySelector(':root');
-    this.#root.style.setProperty('--animationDuration', `${(this.anim.duration / 1000).toString()}s`);
-    this.#root.style.setProperty('--animationTiming', `${this.anim.timing}`);
+    this.root = document.querySelector(':root');
+    this.root.style.setProperty('--animationDuration', `${(this.anim.duration / 1000).toString()}s`);
+    this.root.style.setProperty('--animationTiming', `${this.anim.timing}`);
     
     // Start the slideShow
     this.start = () => {
@@ -128,7 +128,7 @@ class Carousel {
     // Stop the slideShow
     this.end = () => { clearInterval(this.interval); };
     
-    if(this.autoStart) this.start();
+    if(this.anim.autoStart) this.start();
     
     // Typewriter Effect
     this.typewriterEffectH1 = heading.h1.typewriter;
@@ -166,7 +166,7 @@ class Carousel {
       // Left to right
       else { this.changeSlide(this.anim.transition[this.prevSlide].prev); }
       // If restart is true, then restart the slideShow
-      if(this.autoRestart) this.start();
+      if(this.anim.restart) this.start();
     }
   }
   
@@ -193,7 +193,7 @@ class Carousel {
       }
       this.changeSlide(this.anim.transition[this.prevSlide].next);
     }
-    if(this.autoRestart) this.start();
+    if(this.anim.restart) this.start();
   }
   
   // Change slide
@@ -206,10 +206,12 @@ class Carousel {
     this.slides[this.nextSlide].className = `carousel-item carousel-next ${_class}`;
     
     // Change active dots
-    this.#indicators[this.prevSlide].classList.toggle("active");
-    this.#indicators[this.nextSlide].classList.toggle("active");
+    this.indicators[this.prevSlide].classList.toggle("active");
+    this.indicators[this.nextSlide].classList.toggle("active");
 	
-    // Wait animationDuration seconds before disabling the former active slide
+	if(this.heading.h2.anim[this.prevSlide]) this.heading.h2.anim[this.prevSlide]();
+	
+    // Wait anim.duration seconds before disabling the former active slide
     setTimeout(() => {
       this.slides[this.prevSlide].className = "carousel-item disabled";
       this.slides[this.nextSlide].className = "carousel-item";
